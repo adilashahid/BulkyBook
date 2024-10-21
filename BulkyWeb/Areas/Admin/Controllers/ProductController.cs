@@ -1,6 +1,8 @@
 ﻿using BulkyBook.DataAccess.Repository.IRepository;
 using BulkyBook.Model.Models;
 using BulkyBook.Model.ViewModels;
+using BulkyBook.Utility;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.DotNet.Scaffolding.Shared.Messaging;
@@ -8,6 +10,7 @@ using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 namespace BulkyBookWeb.Areas.Admin.Controllers
 {
     [Area("Admin")]
+   // [Authorize(Roles =SD.Role_Admin)]
     public class ProductController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -141,6 +144,17 @@ namespace BulkyBookWeb.Areas.Admin.Controllers
             _unitOfWork.Product.Remove(productToBeDeleted);
             _unitOfWork.Save();
             return Json(new { success = true, message = "Delete Successfully" });
+        }
+        public IActionResult Delete()
+        {
+            var companyToBeDeleted= _unitOfWork.Company.Get(u=>u.Id==0);
+            if (companyToBeDeleted == null)
+            {
+                return Json(new { success = false, message="Error while Deleting" });
+            }
+            _unitOfWork.Company.Remove(companyToBeDeleted);
+            _unitOfWork.Save();
+            return Json(new { success = true, message = "Deleted Succesfully" });
         }
 
         #endregion
