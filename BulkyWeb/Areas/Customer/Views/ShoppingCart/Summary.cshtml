@@ -10,7 +10,7 @@
 				<div class="row px-4">
 					<div class="col-6">
 						<h5 class="pt-2 text-white">
-							Order Summary
+							Shopping Cart
 						</h5>
 					</div>
 					<div class="col-6 text-end">
@@ -87,7 +87,8 @@
 								<span class="text-info">Order Summary:</span>
 							</h4>
 							<ul class="list-group mb-3">
-								@foreach(var details in Model.ShoppingCartList){
+								@foreach (var details in Model.ShoppingCartList)
+								{
 								<li class="list-group-item d-flex justify-content-between">
 									<div>
 											<h6 class="my-0">@details.Product.Title</h6>
