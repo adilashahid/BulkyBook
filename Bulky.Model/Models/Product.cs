@@ -17,8 +17,8 @@ namespace BulkyBook.Model.Models
         [Required]
         public string Author { get; set; }
         [Required]
-        [Display(Name ="List Price")]
-        [Range(1,1000)]
+        [Display(Name = "List Price")]
+        [Range(1, 1000)]
         public double Listprice { get; set; }
         [Required]
         [Display(Name = " Price for 1-50")]
@@ -38,9 +38,9 @@ namespace BulkyBook.Model.Models
         public Category Category { get; set; }
         [ValidateNever]
         public string ImageUrl { get; set; }
-        [ValidateNever]
-        public List<ProductImage> ProductImages { get; set; }
 
 
+
+    
     }
 }

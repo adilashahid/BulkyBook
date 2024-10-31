@@ -23,15 +23,24 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
         }
         public IActionResult Index()
         {
-            var ClaimIdentity = (ClaimsIdentity)User.Identity;
+			// Step 1: Retrieve the current user's identity
+			var ClaimIdentity = (ClaimsIdentity)User.Identity;
             var userId = ClaimIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
-            ShoppingCartVM = new()
+			// Step 2: Initialize the ShoppingCartVM with user's cart items and a new OrderHeader
+			ShoppingCartVM = new()
             {
                 ShoppingCartList = _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == userId,
                 includePropertities: "Product"),
-                OrderHeader = new()
-            };
-            foreach (var cart in ShoppingCartVM.ShoppingCartList)
+                OrderHeader = new() //Initializes a new OrderHeader object that will hold summary details (like total cost) for the current order.
+			};
+			// Step 3: Calculate total cost for items in the cart
+			foreach (var cart in ShoppingCartVM.ShoppingCartList)
+			{
+				cart.Price = GetPriceBasedOnQuality(cart);
+				ShoppingCartVM.OrderHeader.OrderTotal += (cart.Price * cart.Count);
+			}
+
+			foreach (var cart in ShoppingCartVM.ShoppingCartList)
             {
                 cart.Price = GetPriceBasedOnQuality(cart);
                 ShoppingCartVM.OrderHeader.OrderTotal += (cart.Price * cart.Count);
@@ -73,7 +82,8 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
             ShoppingCartVM.OrderHeader.City = ShoppingCartVM.OrderHeader.ApplicationUser.City;
             ShoppingCartVM.OrderHeader.State = ShoppingCartVM.OrderHeader.ApplicationUser.State;
             ShoppingCartVM.OrderHeader.PostalCode = ShoppingCartVM.OrderHeader.ApplicationUser.PostalCode;
-            foreach (var cart in ShoppingCartVM.ShoppingCartList)
+			//  Calculate total order cost based on cart items and their quantities
+			foreach (var cart in ShoppingCartVM.ShoppingCartList)
             {
                 cart.Price = GetPriceBasedOnQuality(cart);
                 ShoppingCartVM.OrderHeader.OrderTotal += (cart.Price * cart.Count);
@@ -129,7 +139,7 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
                     //it is a regular customer account 
                     //stripe logic
                     var domin = "https://localhost:7082/";
-                    var options = new Stripe.Checkout.SessionCreateOptions
+                    var options = new SessionCreateOptions
                     {
                         SuccessUrl = domin + $"Customer/ShoppingCart/OrderConfirmation?id={ShoppingCartVM.OrderHeader.Id}",
                         CancelUrl = domin + "Customer/ShoppingCart/Index",
@@ -201,7 +211,7 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
         }
         public IActionResult Plus(int cartId)
         {
-            var cartFromDb = _unitOfWork.ShoppingCart.Get(u => u.Id == cartId);
+            var cartFromDb = _unitOfWork.ShoppingCart.Get(u => u.Id == cartId, track: true);
             cartFromDb.Count += 1;
             _unitOfWork.ShoppingCart.Update(cartFromDb);
             _unitOfWork.Save();
@@ -209,10 +219,12 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
         }
         public IActionResult Minus(int cartId)
         {
-            var cartFromDb = _unitOfWork.ShoppingCart.Get(u => u.Id == cartId);
+            var cartFromDb = _unitOfWork.ShoppingCart.Get(u => u.Id == cartId,track:true);
             if (cartFromDb.Count <= 0)
             {
                 //Remove that from cart
+                HttpContext.Session.SetInt32(SD.SessionCart,
+                   _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == cartFromDb.ApplicationUserId).Count() - 1);
                 _unitOfWork.ShoppingCart.Remove(cartFromDb);
 
             }
@@ -229,6 +241,8 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
         public IActionResult Remove(int cartId)
         {
             var cartFromDb = _unitOfWork.ShoppingCart.Get(u => u.Id == cartId);
+            HttpContext.Session.SetInt32(SD.SessionCart,
+                   _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == cartFromDb.ApplicationUserId).Count()-1);
             _unitOfWork.ShoppingCart.Remove(cartFromDb);
             _unitOfWork.Save();
             return RedirectToAction(nameof(Index));
