@@ -11,10 +11,11 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
 {
     [Area("Customer")]
     [Authorize]
-    [BindProperties]
+   
     public class ShoppingCartController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
+        [BindProperty]
         public ShoppingCartVM ShoppingCartVM { get; set; }
         public ShoppingCartController(IUnitOfWork unitOfWork)
         {
@@ -26,8 +27,8 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
 			// Step 1: Retrieve the current user's identity
 			var ClaimIdentity = (ClaimsIdentity)User.Identity;
             var userId = ClaimIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
-			// Step 2: Initialize the ShoppingCartVM with user's cart items and a new OrderHeader
-			ShoppingCartVM = new()
+            // Step 2: Initialize the ShoppingCartVM with user's cart items and a new OrderHeader
+            ShoppingCartVM = new()
             {
                 ShoppingCartList = _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == userId,
                 includePropertities: "Product"),
@@ -40,11 +41,7 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
 				ShoppingCartVM.OrderHeader.OrderTotal += (cart.Price * cart.Count);
 			}
 
-			foreach (var cart in ShoppingCartVM.ShoppingCartList)
-            {
-                cart.Price = GetPriceBasedOnQuality(cart);
-                ShoppingCartVM.OrderHeader.OrderTotal += (cart.Price * cart.Count);
-            }
+			
             return View(ShoppingCartVM);
         }
         private double GetPriceBasedOnQuality(ShoppingCart shoppingCart)
@@ -142,7 +139,7 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
                     var options = new SessionCreateOptions
                     {
                         SuccessUrl = domin + $"Customer/ShoppingCart/OrderConfirmation?id={ShoppingCartVM.OrderHeader.Id}",
-                        CancelUrl = domin + "Customer/ShoppingCart/Index",
+                        CancelUrl = domin +"Customer/ShoppingCart/Index",
                         LineItems = new List<SessionLineItemOptions>(),      
                         Mode = "payment",
                     };
@@ -198,6 +195,7 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
                     _unitOfWork.OrderHeader.UpdateStasus(id, SD.StatusApproved, SD.PaymentStatusApproved);
                     _unitOfWork.Save();
                 }
+                HttpContext.Session.Clear();
                 List<ShoppingCart> shoppingCarts = _unitOfWork.ShoppingCart
                 .GetAll(u => u.ApplicationUserId == orderHeader.ApplicationUserId).ToList();
 
@@ -241,8 +239,7 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
         public IActionResult Remove(int cartId)
         {
             var cartFromDb = _unitOfWork.ShoppingCart.Get(u => u.Id == cartId);
-            HttpContext.Session.SetInt32(SD.SessionCart,
-                   _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == cartFromDb.ApplicationUserId).Count()-1);
+            
             _unitOfWork.ShoppingCart.Remove(cartFromDb);
             _unitOfWork.Save();
             return RedirectToAction(nameof(Index));
