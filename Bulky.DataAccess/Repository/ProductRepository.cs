@@ -32,10 +32,10 @@ namespace BulkyBook.DataAccess.Repository
                 objfromdb.Price100 = product.Price100;
                 objfromdb.CategoryId = product.CategoryId;
                 objfromdb.Author = product.Author;
-                if(objfromdb.ImageUrl!=null)
-                {
-                    objfromdb.ImageUrl=product.ImageUrl;
-                }
+                //if(objfromdb.ImageUrl!=null)
+                //{
+                //    objfromdb.ImageUrl=product.ImageUrl;
+                //}
 
             }
         }

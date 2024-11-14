@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <None Remove="Areas\Admin\Controllers\j4ewkpjr.lg1~" />
+    <None Remove="Areas\Customer\Views\ShoppingCart\Index.cshtml~RF14d8a1b.TMP" />
   </ItemGroup>
 
   <ItemGroup>

@@ -24,24 +24,26 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
         }
         public IActionResult Index()
         {
-			// Step 1: Retrieve the current user's identity
-			var ClaimIdentity = (ClaimsIdentity)User.Identity;
-            var userId = ClaimIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
-            // Step 2: Initialize the ShoppingCartVM with user's cart items and a new OrderHeader
+
+            var claimsIdentity = (ClaimsIdentity)User.Identity;
+            var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
+
             ShoppingCartVM = new()
             {
                 ShoppingCartList = _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == userId,
                 includePropertities: "Product"),
-                OrderHeader = new() //Initializes a new OrderHeader object that will hold summary details (like total cost) for the current order.
-			};
-			// Step 3: Calculate total cost for items in the cart
-			foreach (var cart in ShoppingCartVM.ShoppingCartList)
-			{
-				cart.Price = GetPriceBasedOnQuality(cart);
-				ShoppingCartVM.OrderHeader.OrderTotal += (cart.Price * cart.Count);
-			}
+                OrderHeader = new()
+            };
 
-			
+            IEnumerable<ProductImage> productImages = _unitOfWork.ProductImage.GetAll();
+
+            foreach (var cart in ShoppingCartVM.ShoppingCartList)
+            {
+                cart.Product.ProductImages = productImages.Where(u => u.ProductId == cart.Product.Id).ToList();
+                cart.Price = GetPriceBasedOnQuality(cart);
+                ShoppingCartVM.OrderHeader.OrderTotal += (cart.Price * cart.Count);
+            }
+
             return View(ShoppingCartVM);
         }
         private double GetPriceBasedOnQuality(ShoppingCart shoppingCart)
